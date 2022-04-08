@@ -1,6 +1,10 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+$is_superadmin = 1;
+if(Session::has('is_superadmin')){
+    $is_superadmin=Session::get('is_superadmin');
+}
 
 /**
  * 'admin' middleware applied to all routes
@@ -50,6 +54,7 @@ Route::group(['prefix' => 'common'], function () {
     Route::get('reports/{report}/clear', 'Common\Reports@clear')->name('reports.clear');
     Route::get('reports/fields', 'Common\Reports@fields')->name('reports.fields');
     Route::resource('reports', 'Common\Reports');
+
 });
 
 Route::group(['prefix' => 'auth'], function () {
@@ -251,3 +256,59 @@ Route::group(['as' => 'modals.', 'prefix' => 'modals'], function () {
     ]);
     Route::resource('taxes', 'Modals\Taxes');
 });
+
+
+
+if($is_superadmin == 1){
+    
+    Route::group(['prefix' => 'superadmin/auth'], function () {
+        Route::get('logout', 'Superadmin\Auth\Login@destroy')->name('logout');
+
+        Route::get('users/autocomplete', 'Superadmin\Auth\Users@autocomplete')->name('users.autocomplete');
+        Route::get('users/{user}/read-bills', 'Superadmin\Auth\Users@readUpcomingBills')->name('users.read.bills');
+        Route::get('users/{user}/read-invoices', 'Superadmin\Auth\Users@readOverdueInvoices')->name('users.read.invoices');
+        Route::get('users/{user}/enable', 'Superadmin\Auth\Users@enable')->name('users.enable');
+        Route::get('users/{user}/disable', 'Superadmin\Auth\Users@disable')->name('users.disable');
+        Route::resource('users', 'Superadmin\Auth\Users', ['middleware' => ['dropzone']]);
+
+        Route::resource('roles', 'Superadmin\Auth\Roles');
+
+        Route::resource('permissions', 'Superadmin\Auth\Permissions');
+    });
+
+    Route::group(['prefix' => 'superadmin/common'], function () {
+        Route::get('companies/autocomplete', 'Superadmin\Common\Companies@autocomplete')->name('companies.autocomplete');
+        Route::get('companies/{company}/switch', 'Superadmin\Common\Companies@switch')->name('companies.switch');
+        Route::get('companies/{company}/enable', 'Superadmin\Common\Companies@enable')->name('companies.enable');
+        Route::get('companies/{company}/disable', 'Superadmin\Common\Companies@disable')->name('companies.disable');
+        Route::resource('companies', 'Superadmin\Common\Companies', ['middleware' => ['dropzone']]);
+    
+        Route::resource('dashboards', 'Superadmin\Common\Dashboards');
+    
+        // Route::post('widgets/getData', 'Superadmin\Common\Widgets@getData')->name('widgets.getData');
+        // Route::resource('widgets', 'Superadmin\Common\Widgets');
+    
+        // Route::get('import/{group}/{type}/{route?}', 'Superadmin\Common\Import@create')->name('import.create');
+    
+        // Route::get('items/autocomplete', 'Superadmin\Common\Items@autocomplete')->name('superadmin.items.autocomplete');
+        // Route::get('items/{item}/enable', 'Superadmin\Common\Items@enable')->name('superadmin.items.enable');
+        // Route::get('items/{item}/disable', 'Superadmin\Common\Items@disable')->name('superadmin.items.disable');
+        // Route::get('items/{item}/duplicate', 'Superadmin\Common\Items@duplicate')->name('superadmin.items.duplicate');
+        // Route::post('items/import', 'Superadmin\Common\Items@import')->middleware('import')->name('superadmin.items.import');
+        // Route::get('items/export', 'Superadmin\Common\Items@export')->name('superadmin.items.export');
+        // Route::resource('items', 'Superadmin\Common\Items', ['middleware' => ['money', 'dropzone']]);
+    
+        // Route::post('notifications/disable', 'Superadmin\Common\Notifications@disable')->name('notifications.disable');
+        // Route::get('notifications/readAll', 'Superadmin\Common\Notifications@readAll')->name('notifications.read-all');
+        // Route::resource('notifications', 'Superadmin\Common\Notifications');
+    
+        // Route::post('bulk-actions/{group}/{type}', 'Superadmin\Common\BulkActions@action')->name('bulk-actions.action');
+    
+        // Route::get('reports/{report}/print', 'Superadmin\Common\Reports@print')->name('reports.print');
+        // Route::get('reports/{report}/export', 'Superadmin\Common\Reports@export')->name('reports.export');
+        // Route::get('reports/{report}/duplicate', 'Superadmin\Common\Reports@duplicate')->name('reports.duplicate');
+        // Route::get('reports/{report}/clear', 'Superadmin\Common\Reports@clear')->name('reports.clear');
+        // Route::get('reports/fields', 'Superadmin\Common\Reports@fields')->name('reports.fields');
+        // Route::resource('reports', 'Superadmin\Common\Reports');
+    });
+}

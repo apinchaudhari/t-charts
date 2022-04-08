@@ -26,13 +26,13 @@ class ViewComposer extends Provider
 
         // Add company info to menu
         View::composer(
-            ['partials.admin.menu', 'partials.portal.menu'],
+            ['partials.admin.menu', 'partials.portal.menu', 'superadmin.partials.admin.menu', 'superadmin.partials.portal.menu'],
             'App\Http\ViewComposers\Menu'
         );
 
         // Add notifications to header
         View::composer(
-            ['partials.wizard.navbar', 'partials.admin.navbar', 'partials.portal.navbar'],
+            ['partials.wizard.navbar', 'partials.admin.navbar', 'partials.portal.navbar', 'superadmin.partials.wizard.navbar', 'superadmin.partials.admin.navbar', 'superadmin.partials.portal.navbar'],
             'App\Http\ViewComposers\Header'
         );
 

@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * 'common' middleware applied to all routes
@@ -18,6 +20,8 @@ Route::group(['middleware' => 'auth'], function () {
     Route::group(['middleware' => ['permission:read-admin-panel']], function () {
         Route::group(['middleware' => ['menu.admin']], function () {
             Route::get('/', 'Common\Dashboards@show')->name('dashboard');
+            Route::get('superadmin', 'Superadmin\Common\Dashboards@show')->name('superadmindashboard');
+            
         });
 
         Route::get('wizard', 'Wizard\Companies@edit')->name('wizard.edit');

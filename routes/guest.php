@@ -24,3 +24,19 @@ Route::group(['prefix' => 'auth'], function () {
 Route::get('/', function () {
     return redirect()->route('login');
 });
+
+Route::get('superadmin/auth', function () {
+    return redirect()->route('superlogin');
+});
+
+Route::group(['prefix' => 'superadmin/auth'], function () {
+    Route::get('login', 'Superadmin\Auth\Login@create')->name('superlogin');
+    Route::post('login', 'Superadmin\Auth\Login@store');
+
+    Route::get('forgot', 'Superadmin\Auth\Forgot@create')->name('superforgot');
+    Route::post('forgot', 'Superadmin\Auth\Forgot@store');
+
+    //Route::get('reset', 'Auth\Reset@create');
+    Route::get('reset/{token}', 'Superadmin\Auth\Reset@create')->name('superreset');
+    Route::post('reset', 'Superadmin\Auth\Reset@store')->name('reset.store');
+});

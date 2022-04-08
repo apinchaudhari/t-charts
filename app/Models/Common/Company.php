@@ -267,6 +267,7 @@ class Company extends Eloquent implements Ownable
 
     public function users()
     {
+        die("qq");
         return $this->morphedByMany('App\Models\Auth\User', 'user', 'user_companies', 'company_id', 'user_id');
     }
 
@@ -381,6 +382,7 @@ class Company extends Eloquent implements Ownable
      */
     public function scopeUserId($query, $user_id)
     {
+        die("here");
         return $query->whereHas('users', function ($query) use ($user_id) {
             $query->where('user_id', $user_id);
         });

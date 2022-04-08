@@ -2068,6 +2068,9 @@ button.bg-red:focus
     width: 30px !important;
     height: 30px !important;
 }
+.superadmin-body .menu-avatar{
+    width: 100px !important;
+}
 /*--Left Menu Icon Finish--*/
 
 /*--Unselected Text Color--*/

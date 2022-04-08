@@ -49,7 +49,6 @@ class Login extends Controller
 
         // Get user object
         $user = user();
-
         // Check if user is enabled
         if (!$user->enabled) {
             $this->logout();
@@ -61,6 +60,7 @@ class Login extends Controller
                 'message' => trans('auth.disabled'),
                 'data' => null,
                 'redirect' => null,
+                'is_superadmin' => $user->is_superadmin
             ]);
         }
 
@@ -68,6 +68,7 @@ class Login extends Controller
             return $user->companies()->enabled()->first();
         });
 
+        session(['is_superadmin' => $user->is_superadmin]);
         // Logout if no company assigned
         if (!$company) {
             $this->logout();
@@ -79,6 +80,7 @@ class Login extends Controller
                 'message' => trans('auth.error.no_company'),
                 'data' => null,
                 'redirect' => null,
+                'is_superadmin' => $user->is_superadmin
             ]);
         }
 
@@ -98,6 +100,7 @@ class Login extends Controller
                 'message' => null,
                 'data' => null,
                 'redirect' => url($path),
+                'is_superadmin' => $user->is_superadmin
             ]);
         }
 
@@ -111,6 +114,7 @@ class Login extends Controller
             'message' => null,
             'data' => null,
             'redirect' => redirect()->intended($url)->getTargetUrl(),
+            'is_superadmin' => $user->is_superadmin
         ]);
     }
 
@@ -128,6 +132,7 @@ class Login extends Controller
         // Session destroy is required if stored in database
         if (config('session.driver') == 'database') {
             $request = app('Illuminate\Http\Request');
+            $request->session()->forget('is_superadmin');
             $request->session()->getHandler()->destroy($request->session()->getId());
         }
     }

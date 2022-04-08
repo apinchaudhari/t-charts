@@ -79,6 +79,7 @@ body {
 
 /*--------Akaunting Backgrounds--------*/
 /*--Login Page Background--*/
+
 .login-page {
     background: url("../img/login.png") no-repeat center center fixed;
     height: 100%;
@@ -88,6 +89,12 @@ body {
     -webkit-background-size: cover;
     -moz-background-size: cover;
     -o-background-size: cover;
+}
+.login-page.superadmin {
+    background: #41b3a3 !important;
+}
+.superadmin-body #sidenav-main{
+    background-color: #41b3a3 !important;
 }
 /*--Login Page Background Finish--*/
 

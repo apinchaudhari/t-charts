@@ -3,7 +3,7 @@
 return [
 
     'version'               => 'Versió',
-    'powered'               => 'Powered by Akaunting',
+    'powered'               => 'Powered By T-Chart',
     'link'                  => 'https://akaunting.com',
     'software'              => 'Programari lliure de Facturació/Comptabilitat',
 

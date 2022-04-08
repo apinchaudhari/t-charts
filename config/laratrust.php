@@ -219,7 +219,7 @@ return [
              * If the message content is empty it won't be added to the redirection.
              */
             'redirect' => [
-                'url' => 'auth/login',
+                'url' => 'superadmin/auth/login',
                 'message' => [
                     'key' => 'error',
                     'content' => ''

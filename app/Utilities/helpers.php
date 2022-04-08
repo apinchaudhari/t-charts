@@ -25,6 +25,26 @@ if (!function_exists('user')) {
     }
 }
 
+if (!function_exists('admin')) {
+    /**
+     * Get the authenticated user.
+     *
+     * @return \App\Models\Auth\User
+     */
+    function admin()
+    {
+        // Get user from api/web
+        var_dump(request());exit;
+        if (request()->isApi()) {
+            $user = app('Dingo\Api\Auth\Auth')->user();
+        } else {
+            $user = auth()->user();
+        }
+die("in");
+        return $user;
+    }
+}
+
 if (!function_exists('user_id')) {
     /**
      * Get id of current user.
