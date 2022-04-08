@@ -1,11 +1,9 @@
 <?php
-
 use Illuminate\Support\Facades\Route;
-$is_superadmin = 1;
-if(Session::has('is_superadmin')){
-    $is_superadmin=Session::get('is_superadmin');
+$is_superadmin= 0;
+if (strpos($_SERVER['REQUEST_URI'],'superadmin') !== false) {
+    $is_superadmin=1;
 }
-
 /**
  * 'admin' middleware applied to all routes
  *
