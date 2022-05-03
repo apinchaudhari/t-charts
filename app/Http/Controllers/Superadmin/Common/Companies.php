@@ -6,11 +6,12 @@ use App\Abstracts\Http\Controller;
 use App\Http\Requests\Common\Company as Request;
 use App\Jobs\Common\CreateCompany;
 use App\Jobs\Common\DeleteCompany;
-use App\Jobs\Common\UpdateCompany;
-use App\Models\Common\Superadmin\Company;
-use App\Models\Setting\Superadmin\Currency;
+use App\Jobs\Superadmin\Common\UpdateCompany;
+use App\Models\Superadmin\Common\Company;
+use App\Models\Superadmin\Setting\Currency;
 use App\Traits\Uploads;
 use App\Traits\Users;
+use Illuminate\Support\Facades\DB;
 
 class Companies extends Controller
 {
@@ -23,9 +24,24 @@ class Companies extends Controller
      */
     public function index()
     {
-        $companies = user()->companies()->collect();
-
-        return $this->response('superadmin.common.companies.index', compact('companies'));
+      //  $companies = user()->companies()->collect();
+       // $companies = DB::table('companies')->leftjoin('settings', 'companies.id', '=', 'settings.company_id')->get();
+       //$companies = user()->companies()->collect();
+       $companies = DB::table('companies')->leftjoin('settings', 'companies.id', '=', 'settings.company_id')->get()->collect();
+      // echo "<pre>";print_r($companies);exit;
+        $company_data = array();
+        foreach($companies as $company){
+            if(!empty($company->company_id)){
+                $company_data[$company->company_id]['id'] = $company->company_id;
+                $company_data[$company->company_id]['enabled'] = $company->enabled;
+                $company_data[$company->company_id]['created_at'] = $company->created_at;
+                $company_data[$company->company_id][str_replace("company.","",$company->key)] = $company->value;
+            }
+        }
+        $companies = json_decode(json_encode($company_data));
+        $companies_data =  DB::table('companies')->get()->collect();
+       // echo "<pre>";print_r($companies);exit;
+        return $this->response('superadmin.common.companies.index', compact('companies', 'companies_data'));
     }
 
     /**
@@ -91,9 +107,9 @@ class Companies extends Controller
      */
     public function edit(Company $company)
     {
-        if ($this->isNotUserCompany($company->id)) {
-            return redirect()->route('companies.index');
-        }
+        // if ($this->isNotUserCompany($company->id)) {
+        //     return redirect()->route('companies.index');
+        // }
 
         $currencies = Currency::enabled()->pluck('name', 'code');
 

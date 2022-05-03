@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Jobs\Common;
+namespace App\Jobs\Superadmin\Common;
 
 use App\Abstracts\Job;
 use App\Events\Common\CompanyUpdated;
 use App\Events\Common\CompanyUpdating;
 use App\Interfaces\Job\ShouldUpdate;
-use App\Models\Common\Company;
+use App\Models\Superadmin\Common\Company;
 use App\Traits\Users;
 
 class UpdateCompany extends Job implements ShouldUpdate
@@ -110,10 +110,10 @@ class UpdateCompany extends Job implements ShouldUpdate
         }
 
         // Check if user can access company
-        if ($this->isNotUserCompany($this->model->id)) {
-            $message = trans('companies.error.not_user_company');
+        // if ($this->isNotUserCompany($this->model->id)) {
+        //     $message = trans('companies.error.not_user_company');
 
-            throw new \Exception($message);
-        }
+        //     throw new \Exception($message);
+        // }
     }
 }

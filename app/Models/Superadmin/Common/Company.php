@@ -427,6 +427,7 @@ class Company extends Eloquent implements Ownable
      */
     public function scopeAutocomplete($query, $filter)
     {
+        echo "<pre>11";print_r( $filter);exit;
         return $query->join('settings', 'companies.id', '=', 'settings.company_id')
             ->where(function ($query) use ($filter) {
                 foreach ($filter as $key => $value) {

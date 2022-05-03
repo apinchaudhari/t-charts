@@ -70,10 +70,6 @@
                                         <i class="fa fa-ellipsis-h text-muted"></i>
                                     </a>
                                     <div class="dropdown-menu dropdown-menu-right dropdown-menu-arrow">
-                                        @if ($item->enabled)
-                                            <a  class="dropdown-item" href="{{ route('companies.switch', $item->id) }}">{{ trans('general.switch') }}</a>
-                                            <div class="dropdown-divider"></div>
-                                        @endif
                                         <a class="dropdown-item" href="{{ route('companies.edit', $item->id) }}">{{ trans('general.edit') }}</a>
                                         @can('delete-common-companies')
                                             <div class="dropdown-divider"></div>
@@ -86,12 +82,6 @@
                     @endforeach
                 </tbody>
             </table>
-        </div>
-
-        <div class="card-footer table-action">
-            <div class="row">
-                @include('partials.admin.pagination', ['items' => $companies])
-            </div>
         </div>
     </div>
 @endsection

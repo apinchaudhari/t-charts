@@ -1,0 +1,562 @@
+diff --git a/app/Http/Controllers/Superadmin/Auth/Login.php b/app/Http/Controllers/Superadmin/Auth/Login.php
+index c7b70d5d..01b60fc3 100644
+--- a/app/Http/Controllers/Superadmin/Auth/Login.php
++++ b/app/Http/Controllers/Superadmin/Auth/Login.php
+@@ -46,12 +46,12 @@ class Login extends Controller
+                 'redirect' => null,
+             ]);
+         }
+-        
+ 
+         // Get user object
+         $user = user();
+         $is_superadmin = $user->is_superadmin;
+         if($is_superadmin == 1){
++            $_SESSION['is_superadmin'] = $user->is_superadmin;
+             session(['is_superadmin' => $user->is_superadmin]);
+ 
+             // Check if user is enabled
+diff --git a/app/Http/Controllers/Superadmin/Auth/Permissions.php b/app/Http/Controllers/Superadmin/Auth/Permissions.php
+index e5f69f11..37ac9436 100644
+--- a/app/Http/Controllers/Superadmin/Auth/Permissions.php
++++ b/app/Http/Controllers/Superadmin/Auth/Permissions.php
+@@ -1,6 +1,6 @@
+ <?php
+ 
+-namespace App\Http\Controllers\Auth;
++namespace App\Http\Controllers\Superadmin\Auth;
+ 
+ use App\Abstracts\Http\Controller;
+ use App\Http\Requests\Auth\Permission as Request;
+@@ -20,7 +20,7 @@ class Permissions extends Controller
+     {
+         $permissions = Permission::collect();
+ 
+-        return $this->response('auth.permissions.index', compact('permissions'));
++        return $this->response('superadmin.auth.permissions.index', compact('permissions'));
+     }
+ 
+     /**
+@@ -30,7 +30,7 @@ class Permissions extends Controller
+      */
+     public function create()
+     {
+-        return view('auth.permissions.create');
++        return view('superadmin.auth.permissions.create');
+     }
+ 
+     /**
+@@ -70,7 +70,7 @@ class Permissions extends Controller
+      */
+     public function edit(Permission $permission)
+     {
+-        return view('auth.permissions.edit', compact('permission'));
++        return view('superadmin.auth.permissions.edit', compact('permission'));
+     }
+ 
+     /**
+diff --git a/app/Http/Controllers/Superadmin/Auth/Roles.php b/app/Http/Controllers/Superadmin/Auth/Roles.php
+index 5af5cf09..f43a469d 100644
+--- a/app/Http/Controllers/Superadmin/Auth/Roles.php
++++ b/app/Http/Controllers/Superadmin/Auth/Roles.php
+@@ -1,6 +1,6 @@
+ <?php
+ 
+-namespace App\Http\Controllers\Auth;
++namespace App\Http\Controllers\Superadmin\Auth;
+ 
+ use App\Abstracts\Http\Controller;
+ use App\Http\Requests\Auth\Role as Request;
+@@ -21,7 +21,7 @@ class Roles extends Controller
+     {
+         $roles = Role::collect();
+ 
+-        return $this->response('auth.roles.index', compact('roles'));
++        return $this->response('superadmin.auth.roles.index', compact('roles'));
+     }
+ 
+     /**
+@@ -48,7 +48,7 @@ class Roles extends Controller
+             $permissions[$action] = Permission::action($action)->get()->sortBy('title')->all();
+         }
+ 
+-        return view('auth.roles.create', compact('actions', 'permissions'));
++        return view('superadmin.auth.roles.create', compact('actions', 'permissions'));
+     }
+ 
+     /**
+@@ -95,7 +95,7 @@ class Roles extends Controller
+             $permissions[$action] = Permission::action($action)->get()->sortBy('title')->all();
+         }
+ 
+-        return view('auth.roles.edit', compact('role', 'actions', 'permissions'));
++        return view('superadmin.auth.roles.edit', compact('role', 'actions', 'permissions'));
+     }
+ 
+     /**
+diff --git a/app/Http/Controllers/Superadmin/Auth/Users.php b/app/Http/Controllers/Superadmin/Auth/Users.php
+index d512259f..88260a12 100644
+--- a/app/Http/Controllers/Superadmin/Auth/Users.php
++++ b/app/Http/Controllers/Superadmin/Auth/Users.php
+@@ -6,12 +6,14 @@ use App\Abstracts\Http\Controller;
+ use App\Events\Auth\LandingPageShowing;
+ use App\Http\Requests\Superadmin\Auth\User as Request;
+ use App\Jobs\Auth\CreateUser;
+-use App\Jobs\Auth\DeleteUser;
++use App\Jobs\Superadmin\Auth\DeleteUser;
+ use App\Jobs\Auth\UpdateUser;
+ use App\Models\Auth\User;
+ use App\Models\Auth\Role;
+ use App\Traits\Uploads;
+ use Illuminate\Http\Request as BaseRequest;
++use DB;
++
+ 
+ class Users extends Controller
+ {
+@@ -47,7 +49,6 @@ class Users extends Controller
+      */
+     public function show()
+     {
+-        die("here");
+         return redirect()->route('superadmin.users.index');
+     }
+ 
+@@ -69,8 +70,7 @@ class Users extends Controller
+             return $r->hasPermission('read-client-portal');
+         });
+ 
+-        $companies = user()->companies()->take(setting('default.select_limit'))->get()->sortBy('name')->pluck('name', 'id');
+-
++         $companies = DB::table('settings')->where('key',"company.name")->groupBy('company_id')->get()->pluck('value', 'company_id');
+         return view('superadmin.auth.users.create', compact('roles', 'companies', 'landing_pages'));
+     }
+ 
+@@ -83,6 +83,7 @@ class Users extends Controller
+      */
+     public function store(Request $request)
+     {
++        $request->merge(['landing_page' => "dashboard"]);
+         $response = $this->ajaxDispatch(new CreateUser($request));
+ 
+         if ($response['success']) {
+@@ -134,19 +135,7 @@ class Users extends Controller
+             });
+         }
+ 
+-        $companies = user()->companies()->take(setting('default.select_limit'))->get()->sortBy('name')->pluck('name', 'id');
+-
+-        if ($user->company_ids) {
+-            foreach($user->company_ids as $company_id) {
+-                if ($companies->has($company_id)) {
+-                    continue;
+-                }
+-
+-                $company = \App\Models\Common\Company::find($company_id);
+-
+-                $companies->put($company->id, $company->name);
+-            }
+-        }
++        $companies = DB::table('settings')->where('key',"company.name")->groupBy('company_id')->get()->pluck('value', 'company_id');
+ 
+         return view('superadmin.auth.users.edit', compact('user', 'companies', 'roles', 'landing_pages'));
+     }
+@@ -161,10 +150,12 @@ class Users extends Controller
+      */
+     public function update(User $user, Request $request)
+     {
++        $request->merge(['landing_page' => "dashboard"]);
+         if (user()->cannot('update-auth-users') && ($user->id != user()->id)) {
+             abort(403);
+         }
+ 
++       // echo "<pre>";print_r($request->post('companies'));exit;
+         $response = $this->ajaxDispatch(new UpdateUser($user, $request));
+ 
+         if ($response['success']) {
+diff --git a/app/Http/Controllers/Superadmin/Common/Companies.php b/app/Http/Controllers/Superadmin/Common/Companies.php
+index e428fb40..3a96e427 100644
+--- a/app/Http/Controllers/Superadmin/Common/Companies.php
++++ b/app/Http/Controllers/Superadmin/Common/Companies.php
+@@ -6,11 +6,12 @@ use App\Abstracts\Http\Controller;
+ use App\Http\Requests\Common\Company as Request;
+ use App\Jobs\Common\CreateCompany;
+ use App\Jobs\Common\DeleteCompany;
+-use App\Jobs\Common\UpdateCompany;
+-use App\Models\Common\Superadmin\Company;
+-use App\Models\Setting\Superadmin\Currency;
++use App\Jobs\Superadmin\Common\UpdateCompany;
++use App\Models\Superadmin\Common\Company;
++use App\Models\Superadmin\Setting\Currency;
+ use App\Traits\Uploads;
+ use App\Traits\Users;
++use Illuminate\Support\Facades\DB;
+ 
+ class Companies extends Controller
+ {
+@@ -23,9 +24,24 @@ class Companies extends Controller
+      */
+     public function index()
+     {
+-        $companies = user()->companies()->collect();
+-
+-        return $this->response('superadmin.common.companies.index', compact('companies'));
++      //  $companies = user()->companies()->collect();
++       // $companies = DB::table('companies')->leftjoin('settings', 'companies.id', '=', 'settings.company_id')->get();
++       //$companies = user()->companies()->collect();
++       $companies = DB::table('companies')->leftjoin('settings', 'companies.id', '=', 'settings.company_id')->get()->collect();
++      // echo "<pre>";print_r($companies);exit;
++        $company_data = array();
++        foreach($companies as $company){
++            if(!empty($company->company_id)){
++                $company_data[$company->company_id]['id'] = $company->company_id;
++                $company_data[$company->company_id]['enabled'] = $company->enabled;
++                $company_data[$company->company_id]['created_at'] = $company->created_at;
++                $company_data[$company->company_id][str_replace("company.","",$company->key)] = $company->value;
++            }
++        }
++        $companies = json_decode(json_encode($company_data));
++        $companies_data =  DB::table('companies')->get()->collect();
++       // echo "<pre>";print_r($companies);exit;
++        return $this->response('superadmin.common.companies.index', compact('companies', 'companies_data'));
+     }
+ 
+     /**
+@@ -91,9 +107,9 @@ class Companies extends Controller
+      */
+     public function edit(Company $company)
+     {
+-        if ($this->isNotUserCompany($company->id)) {
+-            return redirect()->route('companies.index');
+-        }
++        // if ($this->isNotUserCompany($company->id)) {
++        //     return redirect()->route('companies.index');
++        // }
+ 
+         $currencies = Currency::enabled()->pluck('name', 'code');
+ 
+diff --git a/app/Jobs/Auth/CreateUser.php b/app/Jobs/Auth/CreateUser.php
+index 160146f6..d73450ff 100644
+--- a/app/Jobs/Auth/CreateUser.php
++++ b/app/Jobs/Auth/CreateUser.php
+@@ -43,15 +43,7 @@ class CreateUser extends Job implements HasOwner, HasSource, ShouldCreate
+                 if (app()->runningInConsole() || request()->isInstall()) {
+                     $this->model->companies()->attach($this->request->get('companies'));
+                 } else {
+-                    $user = user();
+-
+-                    $companies = $user->withoutEvents(function () use ($user) {
+-                        return $user->companies()->whereIn('id', $this->request->get('companies'))->pluck('id');
+-                    });
+-
+-                    if ($companies->isNotEmpty()) {
+-                        $this->model->companies()->attach($companies->toArray());
+-                    }
++                    $this->model->companies()->sync($this->request['companies']);
+                 }
+             }
+ 
+diff --git a/app/Jobs/Auth/UpdateUser.php b/app/Jobs/Auth/UpdateUser.php
+index 8d1e7bca..c9742e06 100644
+--- a/app/Jobs/Auth/UpdateUser.php
++++ b/app/Jobs/Auth/UpdateUser.php
+@@ -40,15 +40,16 @@ class UpdateUser extends Job implements ShouldUpdate
+                 if (app()->runningInConsole() || request()->isInstall()) {
+                     $this->model->companies()->sync($this->request->get('companies'));
+                 } else {
+-                    $user = user();
++                    // $user = user();
+ 
+-                    $companies = $user->withoutEvents(function () use ($user) {
+-                        return $user->companies()->whereIn('id', $this->request->get('companies'))->pluck('id');
+-                    });
++                    // $companies = $user->withoutEvents(function () use ($user) {
++                    //     return $user->companies()->whereIn('id', $this->request->get('companies'))->pluck('id');
++                    // });
+ 
+-                    if ($companies->isNotEmpty()) {
+-                        $this->model->companies()->sync($companies->toArray());
+-                    }
++                    // if ($companies->isNotEmpty()) {
++                    //     $this->model->companies()->sync($companies->toArray());
++                    // }
++                    $this->model->companies()->sync($this->request['companies']);
+                 }
+             }
+ 
+diff --git a/app/Jobs/Superadmin/Auth/DeleteUser.php b/app/Jobs/Superadmin/Auth/DeleteUser.php
+index 759302e5..be1e1e13 100644
+--- a/app/Jobs/Superadmin/Auth/DeleteUser.php
++++ b/app/Jobs/Superadmin/Auth/DeleteUser.php
+@@ -1,6 +1,6 @@
+ <?php
+ 
+-namespace App\Jobs\Auth;
++namespace App\Jobs\Superadmin\Auth;
+ 
+ use App\Abstracts\Job;
+ use App\Interfaces\Job\ShouldDelete;
+diff --git a/app/Jobs/Superadmin/Auth/UpdateUser.php b/app/Jobs/Superadmin/Auth/UpdateUser.php
+index 8d1e7bca..24eb40de 100644
+--- a/app/Jobs/Superadmin/Auth/UpdateUser.php
++++ b/app/Jobs/Superadmin/Auth/UpdateUser.php
+@@ -1,6 +1,6 @@
+ <?php
+ 
+-namespace App\Jobs\Auth;
++namespace App\Jobs\Superadmin\Auth;
+ 
+ use App\Abstracts\Job;
+ use App\Interfaces\Job\ShouldUpdate;
+@@ -12,6 +12,7 @@ class UpdateUser extends Job implements ShouldUpdate
+ {
+     public function handle(): User
+     {
++       //echo "<pre>";print_r($this->request['companies']);exit;
+         $this->authorize();
+ 
+         // Do not reset password if not entered/changed
+@@ -38,17 +39,18 @@ class UpdateUser extends Job implements ShouldUpdate
+ 
+             if ($this->request->has('companies')) {
+                 if (app()->runningInConsole() || request()->isInstall()) {
++                    die("dsf");
+                     $this->model->companies()->sync($this->request->get('companies'));
+                 } else {
+-                    $user = user();
+-
+-                    $companies = $user->withoutEvents(function () use ($user) {
+-                        return $user->companies()->whereIn('id', $this->request->get('companies'))->pluck('id');
+-                    });
+-
+-                    if ($companies->isNotEmpty()) {
+-                        $this->model->companies()->sync($companies->toArray());
+-                    }
++                    // $ser = user();
++                   // echo "<pre>";print_r($this->request['companies']);exit;
++                    // $companies = $user->withoutEvents(function () use ($user) {
++                    //     return $user->companies()->whereIn('id', $this->request->get('companies'))->pluck('id');
++                    // });
++
++                    // if ($companies->isNotEmpty()) {
++                        $this->model->companies()->sync($this->request['companies']);
++                   // }
+                 }
+             }
+ 
+diff --git a/app/Jobs/Superadmin/Common/UpdateCompany.php b/app/Jobs/Superadmin/Common/UpdateCompany.php
+index 90176676..168a1e08 100644
+--- a/app/Jobs/Superadmin/Common/UpdateCompany.php
++++ b/app/Jobs/Superadmin/Common/UpdateCompany.php
+@@ -1,12 +1,12 @@
+ <?php
+ 
+-namespace App\Jobs\Common;
++namespace App\Jobs\Superadmin\Common;
+ 
+ use App\Abstracts\Job;
+ use App\Events\Common\CompanyUpdated;
+ use App\Events\Common\CompanyUpdating;
+ use App\Interfaces\Job\ShouldUpdate;
+-use App\Models\Common\Company;
++use App\Models\Superadmin\Common\Company;
+ use App\Traits\Users;
+ 
+ class UpdateCompany extends Job implements ShouldUpdate
+@@ -110,10 +110,10 @@ class UpdateCompany extends Job implements ShouldUpdate
+         }
+ 
+         // Check if user can access company
+-        if ($this->isNotUserCompany($this->model->id)) {
+-            $message = trans('companies.error.not_user_company');
++        // if ($this->isNotUserCompany($this->model->id)) {
++        //     $message = trans('companies.error.not_user_company');
+ 
+-            throw new \Exception($message);
+-        }
++        //     throw new \Exception($message);
++        // }
+     }
+ }
+diff --git a/app/Models/Common/Company.php b/app/Models/Common/Company.php
+index ce279a17..c5be97a1 100644
+--- a/app/Models/Common/Company.php
++++ b/app/Models/Common/Company.php
+@@ -267,7 +267,6 @@ class Company extends Eloquent implements Ownable
+ 
+     public function users()
+     {
+-        die("qq");
+         return $this->morphedByMany('App\Models\Auth\User', 'user', 'user_companies', 'company_id', 'user_id');
+     }
+ 
+diff --git a/app/Models/Superadmin/Common/Company.php b/app/Models/Superadmin/Common/Company.php
+index 6e32794a..3e32c0a7 100644
+--- a/app/Models/Superadmin/Common/Company.php
++++ b/app/Models/Superadmin/Common/Company.php
+@@ -427,6 +427,7 @@ class Company extends Eloquent implements Ownable
+      */
+     public function scopeAutocomplete($query, $filter)
+     {
++        echo "<pre>11";print_r( $filter);exit;
+         return $query->join('settings', 'companies.id', '=', 'settings.company_id')
+             ->where(function ($query) use ($filter) {
+                 foreach ($filter as $key => $value) {
+diff --git a/app/Utilities/helpers.php b/app/Utilities/helpers.php
+index 2beabb1d..967c408f 100644
+--- a/app/Utilities/helpers.php
++++ b/app/Utilities/helpers.php
+@@ -34,13 +34,11 @@ if (!function_exists('admin')) {
+     function admin()
+     {
+         // Get user from api/web
+-        var_dump(request());exit;
+         if (request()->isApi()) {
+             $user = app('Dingo\Api\Auth\Auth')->user();
+         } else {
+             $user = auth()->user();
+         }
+-die("in");
+         return $user;
+     }
+ }
+diff --git a/resources/views/superadmin/auth/users/create.blade.php b/resources/views/superadmin/auth/users/create.blade.php
+index 46a61a72..d6ce5f6e 100644
+--- a/resources/views/superadmin/auth/users/create.blade.php
++++ b/resources/views/superadmin/auth/users/create.blade.php
+@@ -27,8 +27,6 @@
+ 
+                     {{ Form::selectGroup('locale', trans_choice('general.languages', 1), 'flag', language()->allowed(), setting('default.locale')) }}
+ 
+-                    {{ Form::selectGroup('landing_page', trans('auth.landing_page'), 'sign-in-alt', $landing_pages, 'dashboard') }}
+-
+                     @if (setting('default.use_gravatar', '0') == '1')
+                         @stack('picture_input_start')
+                             <div class="form-group col-md-6 disabled">
+diff --git a/resources/views/superadmin/auth/users/edit.blade.php b/resources/views/superadmin/auth/users/edit.blade.php
+index c1e6fa85..3856e3e6 100644
+--- a/resources/views/superadmin/auth/users/edit.blade.php
++++ b/resources/views/superadmin/auth/users/edit.blade.php
+@@ -28,8 +28,6 @@
+ 
+                     {{ Form::selectGroup('locale', trans_choice('general.languages', 1), 'flag', language()->allowed(), $user->locale) }}
+ 
+-                    {{ Form::selectGroup('landing_page', trans('auth.landing_page'), 'sign-in-alt', $landing_pages, $user->landing_page) }}
+-
+                     @if (setting('default.use_gravatar', '0') == '1')
+                         @stack('picture_input_start')
+                             <div class="form-group col-md-6 disabled">
+@@ -47,16 +45,27 @@
+                     @else
+                         {{ Form::fileGroup('picture',  trans_choice('general.pictures', 1), '', ['dropzone-class' => 'form-file']) }}
+                     @endif
++                    @if ($user->is_superadmin != 1)
++                        @can('read-common-companies')
++                            {{ Form::multiSelectRemoteGroup('companies', trans_choice('general.companies', 2), 'user', $companies, $user->company_ids, ['required' => 'required', 'disabled' => (in_array('customer', $user->roles()->pluck('name')->toArray())) ? 'true' : 'false', 'remote_action' => route('companies.index')]) }}
++                        @endcan
+ 
+-                    @can('read-common-companies')
+-                        {{ Form::multiSelectRemoteGroup('companies', trans_choice('general.companies', 2), 'user', $companies, $user->company_ids, ['required' => 'required', 'disabled' => (in_array('customer', $user->roles()->pluck('name')->toArray())) ? 'true' : 'false', 'remote_action' => route('companies.index')]) }}
+-                    @endcan
++                        @can('read-auth-roles')
++                            {{ Form::checkboxGroup('roles', trans_choice('general.roles', 2), $roles, 'display_name') }}
++                        @endcan
++                    
++                        {{ Form::radioGroup('enabled', trans('general.enabled'), $user->enabled) }}
++                    @else
++                        @can('read-common-companies')
++                            {{ Form::multiSelectRemoteGroup('companies', trans_choice('general.companies', 2), 'user', $companies, $user->company_ids, ['required' => 'required', 'disabled' =>  'true', 'remote_action' => route('companies.index')]) }}
++                        @endcan
+ 
+-                    @can('read-auth-roles')
+-                        {{ Form::checkboxGroup('roles', trans_choice('general.roles', 2), $roles, 'display_name') }}
+-                    @endcan
++                        @can('read-auth-roles')
++                            {{ Form::checkboxGroup('roles', trans_choice('general.roles', 2), $roles, 'display_name'),array('disabled' =>  'true') }}
++                        @endcan
++                    
+ 
+-                    {{ Form::radioGroup('enabled', trans('general.enabled'), $user->enabled) }}
++                    @endif
+                 </div>
+             </div>
+ 
+diff --git a/resources/views/superadmin/auth/users/index.blade.php b/resources/views/superadmin/auth/users/index.blade.php
+index bc80f03a..77bb13a2 100644
+--- a/resources/views/superadmin/auth/users/index.blade.php
++++ b/resources/views/superadmin/auth/users/index.blade.php
+@@ -56,19 +56,31 @@
+                             </td>
+                             <td class="col-sm-2 col-md-2 col-lg-3 d-none d-sm-block long-texts">{{ $item->email }}</td>
+                             <td class="col-md-2 col-lg-2 d-none d-md-block">
+-                                @foreach($item->roles as $role)
+-                                    <label class="badge badge-default">{{ $role->display_name }}</label>
+-                                @endforeach
++                                @if ($item->is_superadmin == 1)
++                                <label class="badge badge-default">Superadmin</label>
++                                @else
++                                    @foreach($item->roles as $role)
++                                        <label class="badge badge-default">{{ $role->display_name }}</label>
++                                    @endforeach
++                                @endif
+                             </td>
+                             <td class="col-xs-4 col-sm-3 col-md-2 col-lg-2">
+-                                @if ((user()->id != $item->id) && user()->can('update-auth-users'))
+-                                    {{ Form::enabledGroup($item->id, $item->name, $item->enabled) }}
+-                                @else
++                                @if ($item->is_superadmin == 1)
+                                     @if ($item->enabled)
+                                         <badge rounded type="success" class="mw-60">{{ trans('general.yes') }}</badge>
+                                     @else
+                                         <badge rounded type="danger" class="mw-60">{{ trans('general.no') }}</badge>
+                                     @endif
++                                @else
++                                    @if ((user()->id != $item->id) && user()->can('update-auth-users')  )
++                                        {{ Form::enabledGroup($item->id, $item->name, $item->enabled) }}
++                                    @else
++                                        @if ($item->enabled)
++                                            <badge rounded type="success" class="mw-60">{{ trans('general.yes') }}</badge>
++                                        @else
++                                            <badge rounded type="danger" class="mw-60">{{ trans('general.no') }}</badge>
++                                        @endif
++                                    @endif
+                                 @endif
+                             </td>
+                             <td class="col-xs-4 col-sm-2 col-md-2 col-lg-1 text-center">
+@@ -78,7 +90,7 @@
+                                     </a>
+                                     <div class="dropdown-menu dropdown-menu-right dropdown-menu-arrow">
+                                         <a class="dropdown-item" href="{{ route('users.edit', $item->id) }}">{{ trans('general.edit') }}</a>
+-                                        @if (user()->id != $item->id)
++                                        @if (user()->id != $item->id || $item->is_superadmin != 1)
+                                             @can('delete-auth-users')
+                                                 <div class="dropdown-divider"></div>
+                                                 {!! Form::deleteLink($item, 'users.destroy') !!}
+diff --git a/resources/views/superadmin/common/companies/index.blade.php b/resources/views/superadmin/common/companies/index.blade.php
+index dc7a4c3d..6e8b4cf1 100644
+--- a/resources/views/superadmin/common/companies/index.blade.php
++++ b/resources/views/superadmin/common/companies/index.blade.php
+@@ -70,10 +70,6 @@
+                                         <i class="fa fa-ellipsis-h text-muted"></i>
+                                     </a>
+                                     <div class="dropdown-menu dropdown-menu-right dropdown-menu-arrow">
+-                                        @if ($item->enabled)
+-                                            <a  class="dropdown-item" href="{{ route('companies.switch', $item->id) }}">{{ trans('general.switch') }}</a>
+-                                            <div class="dropdown-divider"></div>
+-                                        @endif
+                                         <a class="dropdown-item" href="{{ route('companies.edit', $item->id) }}">{{ trans('general.edit') }}</a>
+                                         @can('delete-common-companies')
+                                             <div class="dropdown-divider"></div>
+@@ -87,12 +83,6 @@
+                 </tbody>
+             </table>
+         </div>
+-
+-        <div class="card-footer table-action">
+-            <div class="row">
+-                @include('partials.admin.pagination', ['items' => $companies])
+-            </div>
+-        </div>
+     </div>
+ @endsection
+ 

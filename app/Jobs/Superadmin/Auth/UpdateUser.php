@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Jobs\Auth;
+namespace App\Jobs\Superadmin\Auth;
 
 use App\Abstracts\Job;
 use App\Interfaces\Job\ShouldUpdate;
@@ -12,6 +12,7 @@ class UpdateUser extends Job implements ShouldUpdate
 {
     public function handle(): User
     {
+       //echo "<pre>";print_r($this->request['companies']);exit;
         $this->authorize();
 
         // Do not reset password if not entered/changed
@@ -38,17 +39,18 @@ class UpdateUser extends Job implements ShouldUpdate
 
             if ($this->request->has('companies')) {
                 if (app()->runningInConsole() || request()->isInstall()) {
+                    die("dsf");
                     $this->model->companies()->sync($this->request->get('companies'));
                 } else {
-                    $user = user();
+                    // $ser = user();
+                   // echo "<pre>";print_r($this->request['companies']);exit;
+                    // $companies = $user->withoutEvents(function () use ($user) {
+                    //     return $user->companies()->whereIn('id', $this->request->get('companies'))->pluck('id');
+                    // });
 
-                    $companies = $user->withoutEvents(function () use ($user) {
-                        return $user->companies()->whereIn('id', $this->request->get('companies'))->pluck('id');
-                    });
-
-                    if ($companies->isNotEmpty()) {
-                        $this->model->companies()->sync($companies->toArray());
-                    }
+                    // if ($companies->isNotEmpty()) {
+                        $this->model->companies()->sync($this->request['companies']);
+                   // }
                 }
             }
 

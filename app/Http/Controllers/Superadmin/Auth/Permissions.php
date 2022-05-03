@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Auth;
+namespace App\Http\Controllers\Superadmin\Auth;
 
 use App\Abstracts\Http\Controller;
 use App\Http\Requests\Auth\Permission as Request;
@@ -20,7 +20,7 @@ class Permissions extends Controller
     {
         $permissions = Permission::collect();
 
-        return $this->response('auth.permissions.index', compact('permissions'));
+        return $this->response('superadmin.auth.permissions.index', compact('permissions'));
     }
 
     /**
@@ -30,7 +30,7 @@ class Permissions extends Controller
      */
     public function create()
     {
-        return view('auth.permissions.create');
+        return view('superadmin.auth.permissions.create');
     }
 
     /**
@@ -70,7 +70,7 @@ class Permissions extends Controller
      */
     public function edit(Permission $permission)
     {
-        return view('auth.permissions.edit', compact('permission'));
+        return view('superadmin.auth.permissions.edit', compact('permission'));
     }
 
     /**

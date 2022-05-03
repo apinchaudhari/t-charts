@@ -40,15 +40,16 @@ class UpdateUser extends Job implements ShouldUpdate
                 if (app()->runningInConsole() || request()->isInstall()) {
                     $this->model->companies()->sync($this->request->get('companies'));
                 } else {
-                    $user = user();
+                    // $user = user();
 
-                    $companies = $user->withoutEvents(function () use ($user) {
-                        return $user->companies()->whereIn('id', $this->request->get('companies'))->pluck('id');
-                    });
+                    // $companies = $user->withoutEvents(function () use ($user) {
+                    //     return $user->companies()->whereIn('id', $this->request->get('companies'))->pluck('id');
+                    // });
 
-                    if ($companies->isNotEmpty()) {
-                        $this->model->companies()->sync($companies->toArray());
-                    }
+                    // if ($companies->isNotEmpty()) {
+                    //     $this->model->companies()->sync($companies->toArray());
+                    // }
+                    $this->model->companies()->sync($this->request['companies']);
                 }
             }
 

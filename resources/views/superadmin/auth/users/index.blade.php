@@ -56,18 +56,30 @@
                             </td>
                             <td class="col-sm-2 col-md-2 col-lg-3 d-none d-sm-block long-texts">{{ $item->email }}</td>
                             <td class="col-md-2 col-lg-2 d-none d-md-block">
-                                @foreach($item->roles as $role)
-                                    <label class="badge badge-default">{{ $role->display_name }}</label>
-                                @endforeach
+                                @if ($item->is_superadmin == 1)
+                                <label class="badge badge-default">Superadmin</label>
+                                @else
+                                    @foreach($item->roles as $role)
+                                        <label class="badge badge-default">{{ $role->display_name }}</label>
+                                    @endforeach
+                                @endif
                             </td>
                             <td class="col-xs-4 col-sm-3 col-md-2 col-lg-2">
-                                @if ((user()->id != $item->id) && user()->can('update-auth-users'))
-                                    {{ Form::enabledGroup($item->id, $item->name, $item->enabled) }}
-                                @else
+                                @if ($item->is_superadmin == 1)
                                     @if ($item->enabled)
                                         <badge rounded type="success" class="mw-60">{{ trans('general.yes') }}</badge>
                                     @else
                                         <badge rounded type="danger" class="mw-60">{{ trans('general.no') }}</badge>
+                                    @endif
+                                @else
+                                    @if ((user()->id != $item->id) && user()->can('update-auth-users')  )
+                                        {{ Form::enabledGroup($item->id, $item->name, $item->enabled) }}
+                                    @else
+                                        @if ($item->enabled)
+                                            <badge rounded type="success" class="mw-60">{{ trans('general.yes') }}</badge>
+                                        @else
+                                            <badge rounded type="danger" class="mw-60">{{ trans('general.no') }}</badge>
+                                        @endif
                                     @endif
                                 @endif
                             </td>
@@ -78,7 +90,7 @@
                                     </a>
                                     <div class="dropdown-menu dropdown-menu-right dropdown-menu-arrow">
                                         <a class="dropdown-item" href="{{ route('users.edit', $item->id) }}">{{ trans('general.edit') }}</a>
-                                        @if (user()->id != $item->id)
+                                        @if (user()->id != $item->id || $item->is_superadmin != 1)
                                             @can('delete-auth-users')
                                                 <div class="dropdown-divider"></div>
                                                 {!! Form::deleteLink($item, 'users.destroy') !!}

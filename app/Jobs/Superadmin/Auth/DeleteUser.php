@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Jobs\Auth;
+namespace App\Jobs\Superadmin\Auth;
 
 use App\Abstracts\Job;
 use App\Interfaces\Job\ShouldDelete;

@@ -43,15 +43,7 @@ class CreateUser extends Job implements HasOwner, HasSource, ShouldCreate
                 if (app()->runningInConsole() || request()->isInstall()) {
                     $this->model->companies()->attach($this->request->get('companies'));
                 } else {
-                    $user = user();
-
-                    $companies = $user->withoutEvents(function () use ($user) {
-                        return $user->companies()->whereIn('id', $this->request->get('companies'))->pluck('id');
-                    });
-
-                    if ($companies->isNotEmpty()) {
-                        $this->model->companies()->attach($companies->toArray());
-                    }
+                    $this->model->companies()->sync($this->request['companies']);
                 }
             }
 

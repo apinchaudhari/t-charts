@@ -6,12 +6,14 @@ use App\Abstracts\Http\Controller;
 use App\Events\Auth\LandingPageShowing;
 use App\Http\Requests\Superadmin\Auth\User as Request;
 use App\Jobs\Auth\CreateUser;
-use App\Jobs\Auth\DeleteUser;
+use App\Jobs\Superadmin\Auth\DeleteUser;
 use App\Jobs\Auth\UpdateUser;
 use App\Models\Auth\User;
 use App\Models\Auth\Role;
 use App\Traits\Uploads;
 use Illuminate\Http\Request as BaseRequest;
+use DB;
+
 
 class Users extends Controller
 {
@@ -47,7 +49,6 @@ class Users extends Controller
      */
     public function show()
     {
-        die("here");
         return redirect()->route('superadmin.users.index');
     }
 
@@ -69,8 +70,7 @@ class Users extends Controller
             return $r->hasPermission('read-client-portal');
         });
 
-        $companies = user()->companies()->take(setting('default.select_limit'))->get()->sortBy('name')->pluck('name', 'id');
-
+         $companies = DB::table('settings')->where('key',"company.name")->groupBy('company_id')->get()->pluck('value', 'company_id');
         return view('superadmin.auth.users.create', compact('roles', 'companies', 'landing_pages'));
     }
 
@@ -83,6 +83,7 @@ class Users extends Controller
      */
     public function store(Request $request)
     {
+        $request->merge(['landing_page' => "dashboard"]);
         $response = $this->ajaxDispatch(new CreateUser($request));
 
         if ($response['success']) {
@@ -134,19 +135,7 @@ class Users extends Controller
             });
         }
 
-        $companies = user()->companies()->take(setting('default.select_limit'))->get()->sortBy('name')->pluck('name', 'id');
-
-        if ($user->company_ids) {
-            foreach($user->company_ids as $company_id) {
-                if ($companies->has($company_id)) {
-                    continue;
-                }
-
-                $company = \App\Models\Common\Company::find($company_id);
-
-                $companies->put($company->id, $company->name);
-            }
-        }
+        $companies = DB::table('settings')->where('key',"company.name")->groupBy('company_id')->get()->pluck('value', 'company_id');
 
         return view('superadmin.auth.users.edit', compact('user', 'companies', 'roles', 'landing_pages'));
     }
@@ -161,10 +150,12 @@ class Users extends Controller
      */
     public function update(User $user, Request $request)
     {
+        $request->merge(['landing_page' => "dashboard"]);
         if (user()->cannot('update-auth-users') && ($user->id != user()->id)) {
             abort(403);
         }
 
+       // echo "<pre>";print_r($request->post('companies'));exit;
         $response = $this->ajaxDispatch(new UpdateUser($user, $request));
 
         if ($response['success']) {

@@ -34,13 +34,11 @@ if (!function_exists('admin')) {
     function admin()
     {
         // Get user from api/web
-        var_dump(request());exit;
         if (request()->isApi()) {
             $user = app('Dingo\Api\Auth\Auth')->user();
         } else {
             $user = auth()->user();
         }
-die("in");
         return $user;
     }
 }

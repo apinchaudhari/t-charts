@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Auth;
+namespace App\Http\Controllers\Superadmin\Auth;
 
 use App\Abstracts\Http\Controller;
 use App\Http\Requests\Auth\Role as Request;
@@ -21,7 +21,7 @@ class Roles extends Controller
     {
         $roles = Role::collect();
 
-        return $this->response('auth.roles.index', compact('roles'));
+        return $this->response('superadmin.auth.roles.index', compact('roles'));
     }
 
     /**
@@ -48,7 +48,7 @@ class Roles extends Controller
             $permissions[$action] = Permission::action($action)->get()->sortBy('title')->all();
         }
 
-        return view('auth.roles.create', compact('actions', 'permissions'));
+        return view('superadmin.auth.roles.create', compact('actions', 'permissions'));
     }
 
     /**
@@ -95,7 +95,7 @@ class Roles extends Controller
             $permissions[$action] = Permission::action($action)->get()->sortBy('title')->all();
         }
 
-        return view('auth.roles.edit', compact('role', 'actions', 'permissions'));
+        return view('superadmin.auth.roles.edit', compact('role', 'actions', 'permissions'));
     }
 
     /**

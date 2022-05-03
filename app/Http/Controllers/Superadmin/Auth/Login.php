@@ -46,12 +46,12 @@ class Login extends Controller
                 'redirect' => null,
             ]);
         }
-        
 
         // Get user object
         $user = user();
         $is_superadmin = $user->is_superadmin;
         if($is_superadmin == 1){
+            $_SESSION['is_superadmin'] = $user->is_superadmin;
             session(['is_superadmin' => $user->is_superadmin]);
 
             // Check if user is enabled
